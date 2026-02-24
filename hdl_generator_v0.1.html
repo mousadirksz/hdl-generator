@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HDL Generator v0.1</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.0/jszip.min.js"></script>
+<style>
+    :root{font-family:Arial,Helvetica,sans-serif}
+    body{margin:20px}
+    label{display:block;margin:8px 0 4px}
+    input{width:100%;padding:6px;margin-bottom:8px;box-sizing:border-box}
+    button{padding:10px 14px;background:#2d8f4d;color:#fff;border:none;cursor:pointer}
+    .muted{color:#666;font-size:0.9em;}
+    .error{color:#b00;margin-top:8px;}
+</style>
+</head>
+<body>
+    <h1>HDL Generator v0.1</h1>
+    <p class="muted">Vul de velden in en klik op "Genereer" om een ZIP met <code>Worker.dat</code> te downloaden.</p>
+
+    <form id="hdlForm" onsubmit="return false">
+        <label for="datumBegin">Begindatum</label>
+        <input id="datumBegin" name="datumBegin" type="text" placeholder="YYYY/MM/DD" required>
+
+        <label for="iamNum">IAM nummer</label>
+        <input id="iamNum" name="iamNum" type="text" placeholder="Alleen het nummer" required>
+
+        <label for="email">E-mail</label>
+        <input id="email" name="email" type="email" placeholder="E-mail van de gebruiker" required>
+
+        <label for="department">Department</label>
+        <input id="department" name="department" type="text" placeholder="Bijv. 20500-AO+AP CCR COMPLIANCE">
+
+        <label for="kostenplaats">Kostenplaats</label>
+        <input id="kostenplaats" name="kostenplaats" type="text" placeholder="Bijv. 20500">
+
+        <label for="username">Username</label>
+        <input id="username" name="username" type="text" placeholder="gebruikersnaam" required>
+
+        <label for="voornaam">Voornaam</label>
+        <input id="voornaam" name="voornaam" type="text">
+
+        <label for="tussennaam">Tussennaam</label>
+        <input id="tussennaam" name="tussennaam" type="text">
+
+        <label for="achternaam">Achternaam</label>
+        <input id="achternaam" name="achternaam" type="text">
+
+        <div style="margin-top:10px">
+            <button id="generateBtn" type="button">Genereer Tekstbestand</button>
+        </div>
+        <div id="status" class="error" role="status" aria-live="polite"></div>
+    </form>
+
+    <script>
+        (function(){
+            const form = document.getElementById('hdlForm');
+            const statusEl = document.getElementById('status');
+            const btn = document.getElementById('generateBtn');
+
+            function getValues(){
+                return {
+                    datumBegin: document.getElementById('datumBegin').value.trim(),
+                    iamNum: document.getElementById('iamNum').value.trim(),
+                    email: document.getElementById('email').value.trim(),
+                    department: document.getElementById('department').value.trim(),
+                    kostenplaats: document.getElementById('kostenplaats').value.trim(),
+                    username: document.getElementById('username').value.trim(),
+                    voornaam: document.getElementById('voornaam').value.trim(),
+                    tussennaam: document.getElementById('tussennaam').value.trim(),
+                    achternaam: document.getElementById('achternaam').value.trim()
+                };
+            }
+
+            function validate(v){
+                const errs = [];
+                if(!v.datumBegin) errs.push('Begindatum is verplicht.');
+                if(!v.iamNum) errs.push('IAM nummer is verplicht.');
+                if(!v.username) errs.push('Username is verplicht.');
+                if(!v.email) errs.push('E-mail is verplicht.');
+                else{
+                    // eenvoudige e-mail check
+                    const re = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+                    if(!re.test(v.email)) errs.push('E-mail lijkt niet geldig.');
+                }
+                return errs;
+            }
+
+            function buildContent(v){
+                const meta = [
+                    'METADATA|Worker|ActionCode|EffectiveStartDate|EffectiveEndDate|StartDate|SourceSystemId|SourceSystemOwner|PersonNumber',
+                    'METADATA|PersonName|EffectiveStartDate|EffectiveEndDate|LegislationCode|PersonId(SourceSystemId)|NameType|FirstName|MiddleNames|LastName|SourceSystemId|SourceSystemOwner',
+                    'METADATA|PersonEmail|PersonId(SourceSystemId)|DateFrom|DateTo|EmailType|EmailAddress|PrimaryFlag|SourceSystemId|SourceSystemOwner',
+                    'METADATA|WorkRelationship|DateStart|LegalEmployerName|WorkerType|PersonId(SourceSystemId)|PrimaryFlag|SourceSystemId|SourceSystemOwner',
+                    'METADATA|WorkTerms|ActionCode|AssignmentType|BusinessUnitShortCode|LegalEmployerName|EffectiveEndDate|EffectiveLatestChange|EffectiveSequence|EffectiveStartDate|JobCode|PeriodOfServiceId(SourceSystemId)|PersonId(SourceSystemId)|PrimaryWorkTermsFlag|SourceSystemId|SourceSystemOwner|LocationCode',
+                    'METADATA|Assignment|ActionCode|ReasonCode|AssignmentStatusTypeCode|AssignmentType|EffectiveEndDate|EffectiveLatestChange|EffectiveSequence|EffectiveStartDate|JobCode|BusinessUnitShortCode|DepartmentName|PeriodOfServiceId(SourceSystemId)|PersonId(SourceSystemId)|PrimaryAssignmentFlag|PersonTypeCode|WorkTermsAssignmentId(SourceSystemId)|SourceSystemId|SourceSystemOwner|AssignmentNumber|LocationCode|DefaultExpenseAccount',
+                    'METADATA|PersonUserInformation|PersonNumber|UserName|SendCredentialsEmailFlag|GeneratedUserAccountFlag|UsernameMatchingFlag',
+                    'METADATA|PersonUserManualRoles|PersonNumber|UserName|RoleCommonName'
+                ];
+
+                const merge = [
+                    `MERGE|Worker|HIRE|${v.datumBegin}|4712/12/31|${v.datumBegin}|IAM-${v.iamNum}|HRC_SQLLOADER|IAM-${v.iamNum}`,
+                    `MERGE|PersonName|${v.datumBegin}|4712/12/31|NL|IAM-${v.iamNum}|GLOBAL|${v.voornaam}|${v.tussennaam}|${v.achternaam}|PNIAM-${v.iamNum}|HRC_SQLLOADER`,
+                    `MERGE|PersonEmail|IAM-${v.iamNum}|${v.datumBegin}|4712/12/31|W1|${v.email}|Y|PEIAM-${v.iamNum}|HRC_SQLLOADER`,
+                    `MERGE|WorkRelationship|${v.datumBegin}|Schiphol Nederland BV|E|IAM-${v.iamNum}|Y|WRIAM-${v.iamNum}|HRC_SQLLOADER`,
+                    `MERGE|WorkTerms|HIRE|ET|Schiphol Nederland BV|Schiphol Nederland BV|4712/12/31|Y|1|${v.datumBegin}|SG_E|WRIAM-${v.iamNum}|IAM-${v.iamNum}|Y|WTIAM-${v.iamNum}|HRC_SQLLOADER|SG_SCHIPHOL`,
+                    `MERGE|Assignment|HIRE|NEWHIRE|ACTIVE_PROCESS|E|4712/12/31|Y|1|${v.datumBegin}|SG_E|Schiphol Nederland BV|${v.department}|WRIAM-${v.iamNum}|IAM-${v.iamNum}|Y|Employee|WTIAM-${v.iamNum}|ASGIAM-${v.iamNum}|HRC_SQLLOADER|EIAM-${v.iamNum}|SG_SCHIPHOL|100.4059100.${v.kostenplaats}.100000.L00000.000.00000000`,
+                    `MERGE|PersonUserInformation|IAM-${v.iamNum}|${v.username}|N|Y|Y`,
+                    `MERGE|PersonUserManualRoles|IAM-${v.iamNum}|${v.username}|ORA_PER_EMPLOYEE_ABSTRACT`
+                ];
+
+                return meta.concat(merge).join('\n');
+            }
+
+            async function generateZip(content, filename){
+                const zip = new JSZip();
+                zip.file('Worker.dat', content);
+                const blob = await zip.generateAsync({type:'blob'});
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(a.href);
+            }
+
+            btn.addEventListener('click', async ()=>{
+                statusEl.textContent = '';
+                const vals = getValues();
+                const errors = validate(vals);
+                if(errors.length){
+                    statusEl.textContent = errors.join(' ');
+                    return;
+                }
+
+                try{
+                    btn.disabled = true;
+                    const content = buildContent(vals);
+                    const filename = `${vals.username || 'user'}_IAM-${vals.iamNum}.zip`;
+                    // Log de gegenereerde inhoud en bestandsnaam naar de console
+                    console.group && console.group('HDL Generator output');
+                    console.log('Generated Worker.dat content:\n' + content);
+                    console.log('ZIP filename:', filename);
+                    console.groupEnd && console.groupEnd();
+                    await generateZip(content, filename);
+                }catch(e){
+                    statusEl.textContent = 'Fout bij genereren: ' + (e && e.message ? e.message : e);
+                }finally{
+                    btn.disabled = false;
+                }
+            });
+        })();
+    </script>
+</body>
+</html>
