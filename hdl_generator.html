@@ -59,9 +59,12 @@
             const btn = document.getElementById('generateBtn');
 
             function getValues(){
+                let iamNumRaw = document.getElementById('iamNum').value.trim();
+                // Vul aan tot 6 cijfers met voorloopnullen
+                let iamNum = iamNumRaw.padStart(6, '0');
                 return {
                     datumBegin: document.getElementById('datumBegin').value.trim(),
-                    iamNum: document.getElementById('iamNum').value.trim(),
+                    iamNum: iamNum,
                     email: document.getElementById('email').value.trim(),
                     department: document.getElementById('department').value.trim(),
                     kostenplaats: document.getElementById('kostenplaats').value.trim(),
@@ -79,6 +82,7 @@
                 else {
                     if(/iam/i.test(v.iamNum)) errs.push('IAM-nummer mag geen "IAM" bevatten, alleen cijfers.');
                     if(!/^\d+$/.test(v.iamNum)) errs.push('IAM-nummer moet alleen uit cijfers bestaan.');
+                    if(v.iamNum.length !== 6) errs.push('IAM-nummer moet precies 6 cijfers zijn (voorloopnullen worden automatisch toegevoegd).');
                 }
                 if(!v.username) errs.push('Username is verplicht.');
                 if(!v.email) errs.push('E-mail is verplicht.');
