@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>HDL Generator v0.1</title>
+	    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        input {
+            width: 100%;
+            padding: 5px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>HDL Generator v0.1</h1>
+    <h2>Te openen in browser</h2>
+
+    <label for="datumBegin">Begindatum:</label>
+    <input type="text" id="datumBegin" placeholder="YYYY/MM/DD">
+
+    <label for="iamNum">IAM Num:</label>
+    <input type="text" id="iamNum" placeholder="Alleen het nummer">
+
+    <label for="email">Email:</label>
+    <input type="text" id="email" placeholder="E-mail van de gebruiker">
+
+    <label for="naam department">Department:</label>
+    <input type="text" id="department" placeholder="Bijv. 20500-AO+AP CCR COMPLIANCE">
+
+    <label for="grootboekCombi">Kostenplaats:</label>
+    <input type="text" id="kostenplaats" placeholder="Bijv. 20500">
+
+    <label for="grootboekCombi">Username:</label>
+    <input type="text" id="username" placeholder="">
+
+    <label for="grootboekCombi">Voornaam:</label>
+    <input type="text" id="voornaam" placeholder="">
+
+    <label for="grootboekCombi">Tussennaam:</label>
+    <input type="text" id="tussennaam" placeholder="">
+
+    <label for="grootboekCombi">Achternaam:</label>
+    <input type="text" id="achternaam" placeholder="">
+
+
+
+
+    <!-- Voeg andere invoervelden toe voor je variabelen -->
+
+    <button onclick="generateTextFile()">Genereer Tekstbestand</button>
+
+    <script>
+        function generateTextFile() {
+            var datumBegin = document.getElementById('datumBegin').value;
+            var iamNum = document.getElementById('iamNum').value;
+            var email = document.getElementById('email').value;
+            var department = document.getElementById('department').value;
+			var kostenplaats = document.getElementById('kostenplaats').value;
+			var voornaam = document.getElementById('voornaam').value;
+			var tussennaam = document.getElementById('tussennaam').value;
+			var achternaam = document.getElementById('achternaam').value;
+			var username = document.getElementById('username').value;
+			
+            // Voeg andere variabelen toe op een vergelijkbare manier
+
+            var content = `METADATA|Worker|ActionCode|EffectiveStartDate|EffectiveEndDate|StartDate|SourceSystemId|SourceSystemOwner|PersonNumber
+METADATA|PersonName|EffectiveStartDate|EffectiveEndDate|LegislationCode|PersonId(SourceSystemId)|NameType|FirstName|MiddleNames|LastName|SourceSystemId|SourceSystemOwner
+METADATA|PersonEmail|PersonId(SourceSystemId)|DateFrom|DateTo|EmailType|EmailAddress|PrimaryFlag|SourceSystemId|SourceSystemOwner
+METADATA|WorkRelationship|DateStart|LegalEmployerName|WorkerType|PersonId(SourceSystemId)|PrimaryFlag|SourceSystemId|SourceSystemOwner
+METADATA|WorkTerms|ActionCode|AssignmentType|BusinessUnitShortCode|LegalEmployerName|EffectiveEndDate|EffectiveLatestChange|EffectiveSequence|EffectiveStartDate|JobCode|PeriodOfServiceId(SourceSystemId)|PersonId(SourceSystemId)|PrimaryWorkTermsFlag|SourceSystemId|SourceSystemOwner|LocationCode
+METADATA|Assignment|ActionCode|ReasonCode|AssignmentStatusTypeCode|AssignmentType|EffectiveEndDate|EffectiveLatestChange|EffectiveSequence|EffectiveStartDate|JobCode|BusinessUnitShortCode|DepartmentName|PeriodOfServiceId(SourceSystemId)|PersonId(SourceSystemId)|PrimaryAssignmentFlag|PersonTypeCode|WorkTermsAssignmentId(SourceSystemId)|SourceSystemId|SourceSystemOwner|AssignmentNumber|LocationCode|DefaultExpenseAccount
+METADATA|PersonUserInformation|PersonNumber|UserName|SendCredentialsEmailFlag|GeneratedUserAccountFlag|UsernameMatchingFlag
+METADATA|PersonUserManualRoles|PersonNumber|UserName|RoleCommonName
+MERGE|Worker|HIRE|${datumBegin}|4712/12/31|${datumBegin}|IAM-${iamNum}|HRC_SQLLOADER|IAM-${iamNum}
+MERGE|PersonName|${datumBegin}|4712/12/31|NL|IAM-${iamNum}|GLOBAL|${voornaam}|${tussennaam}|${achternaam}|PNIAM-${iamNum}|HRC_SQLLOADER
+MERGE|PersonEmail|IAM-${iamNum}|${datumBegin}|4712/12/31|W1|${email}|Y|PEIAM-${iamNum}|HRC_SQLLOADER
+MERGE|WorkRelationship|${datumBegin}|Schiphol Nederland BV|E|IAM-${iamNum}|Y|WRIAM-${iamNum}|HRC_SQLLOADER
+MERGE|WorkTerms|HIRE|ET|Schiphol Nederland BV|Schiphol Nederland BV|4712/12/31|Y|1|${datumBegin}|SG_E|WRIAM-${iamNum}|IAM-${iamNum}|Y|WTIAM-${iamNum}|HRC_SQLLOADER|SG_SCHIPHOL
+MERGE|Assignment|HIRE|NEWHIRE|ACTIVE_PROCESS|E|4712/12/31|Y|1|${datumBegin}|SG_E|Schiphol Nederland BV|${department}|WRIAM-${iamNum}|IAM-${iamNum}|Y|Employee|WTIAM-${iamNum}|ASGIAM-${iamNum}|HRC_SQLLOADER|EIAM-${iamNum}|SG_SCHIPHOL|100.4059100.${kostenplaats}.100000.L00000.000.00000000
+MERGE|PersonUserInformation|IAM-${iamNum}|${username}|N|Y|Y
+MERGE|PersonUserManualRoles|IAM-${iamNum}|${username}|ORA_PER_EMPLOYEE_ABSTRACT`;
+
+        var zip = new JSZip();
+        zip.file('Worker.dat', content);
+        zip.generateAsync({ type: 'blob' }).then(function (zipBlob) {
+            var zipLink = document.createElement('a');
+            zipLink.href = window.URL.createObjectURL(zipBlob);
+            zipLink.download = `${username}_IAM-${iamNum}.zip`;
+            document.body.appendChild(zipLink);
+            zipLink.click();
+            document.body.removeChild(zipLink);
+			});
+
+        }
+    </script>
+
+
+</body>
+</html>
