@@ -20,10 +20,10 @@
 
     <form id="hdlForm" onsubmit="return false">
         <label for="datumBegin">Begindatum</label>
-        <input id="datumBegin" name="datumBegin" type="text" placeholder="YYYY/MM/DD" required>
+        <input id="datumBegin" name="datumBegin" type="date" required>
 
         <label for="iamNum">IAM nummer</label>
-        <input id="iamNum" name="iamNum" type="text" placeholder="Alleen het nummer" required>
+        <input id="iamNum" name="iamNum" type="text" placeholder="Alleen het nummer (cijfers)" required pattern="\\d+">
 
         <label for="email">E-mail</label>
         <input id="email" name="email" type="email" placeholder="E-mail van de gebruiker" required>
@@ -76,6 +76,10 @@
                 const errs = [];
                 if(!v.datumBegin) errs.push('Begindatum is verplicht.');
                 if(!v.iamNum) errs.push('IAM nummer is verplicht.');
+                else {
+                    if(/iam/i.test(v.iamNum)) errs.push('IAM-nummer mag geen "IAM" bevatten, alleen cijfers.');
+                    if(!/^\d+$/.test(v.iamNum)) errs.push('IAM-nummer moet alleen uit cijfers bestaan.');
+                }
                 if(!v.username) errs.push('Username is verplicht.');
                 if(!v.email) errs.push('E-mail is verplicht.');
                 else{
