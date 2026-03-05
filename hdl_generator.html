@@ -2,7 +2,7 @@
 <html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>HDL Generator v0.1</title>
+<title>HDL Generator</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.0/jszip.min.js"></script>
 <style>
     :root{font-family:Arial,Helvetica,sans-serif}
@@ -15,7 +15,7 @@
 </style>
 </head>
 <body>
-    <h1>HDL Generator v0.1</h1>
+    <h1 id="pageTitle">HDL Generator</h1>
     <p class="muted">Vul de velden in en klik op "Genereer" om een ZIP met <code>Worker.dat</code> te downloaden.</p>
 
     <form id="hdlForm" onsubmit="return false">
@@ -60,6 +60,29 @@
             const form = document.getElementById('hdlForm');
             const statusEl = document.getElementById('status');
             const btn = document.getElementById('generateBtn');
+            const titleEl = document.getElementById('pageTitle');
+
+            async function setDynamicTitle(){
+                const baseTitle = 'HDL Generator';
+                const owner = 'mousadirksz';
+                const repo = 'hdl-generator';
+                const branch = 'main';
+
+                try{
+                    const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/commits/${branch}`);
+                    if(!response.ok) throw new Error('GitHub API niet bereikbaar');
+                    const data = await response.json();
+                    const shaShort = data && data.sha ? String(data.sha).slice(0, 7) : '';
+                    const dynamicTitle = shaShort ? `${baseTitle} ${branch}@${shaShort}` : baseTitle;
+                    document.title = dynamicTitle;
+                    if(titleEl) titleEl.textContent = dynamicTitle;
+                }catch(_e){
+                    document.title = baseTitle;
+                    if(titleEl) titleEl.textContent = baseTitle;
+                }
+            }
+
+            setDynamicTitle();
 
             function getValues(){
                 return {
