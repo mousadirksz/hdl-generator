@@ -22,6 +22,9 @@
         <label for="datumBegin">Begindatum</label>
         <input id="datumBegin" name="datumBegin" type="date" required>
 
+        <label for="geboortedatum">Geboortedatum</label>
+        <input id="geboortedatum" name="geboortedatum" type="date" required>
+
         <label for="iamNum">IAM nummer</label>
         <input id="iamNum" name="iamNum" type="text" placeholder="Alleen het nummer (cijfers)" required pattern="\\d+">
 
@@ -61,6 +64,7 @@
             function getValues(){
                 return {
                     datumBegin: document.getElementById('datumBegin').value.trim(),
+                    geboortedatum: document.getElementById('geboortedatum').value.trim(),
                     iamNum: document.getElementById('iamNum').value.trim(),
                     email: document.getElementById('email').value.trim(),
                     department: document.getElementById('department').value.trim(),
@@ -75,6 +79,9 @@
             function validate(v){
                 const errs = [];
                 if(!v.datumBegin) errs.push('Begindatum is verplicht.');
+                if(!v.geboortedatum) errs.push('Geboortedatum is verplicht.');
+                if(v.datumBegin && !toSlashDate(v.datumBegin)) errs.push('Begindatum moet in formaat YYYY/MM/DD zijn.');
+                if(v.geboortedatum && !toSlashDate(v.geboortedatum)) errs.push('Geboortedatum moet in formaat YYYY/MM/DD zijn.');
                 if(!v.iamNum) errs.push('IAM nummer is verplicht.');
                 else {
                     if(/iam/i.test(v.iamNum)) errs.push('IAM-nummer mag geen "IAM" bevatten, alleen cijfers.');
@@ -91,9 +98,17 @@
                 return errs;
             }
 
+            function toSlashDate(value){
+                const m = /^(\d{4})[-/](\d{2})[-/](\d{2})$/.exec(value);
+                if(!m) return '';
+                return `${m[1]}/${m[2]}/${m[3]}`;
+            }
+
             function buildContent(v){
+                const startDate = toSlashDate(v.datumBegin);
+                const birthDate = toSlashDate(v.geboortedatum);
                 const meta = [
-                    'METADATA|Worker|ActionCode|EffectiveStartDate|EffectiveEndDate|StartDate|SourceSystemId|SourceSystemOwner|PersonNumber',
+                    'METADATA|Worker|ActionCode|EffectiveStartDate|EffectiveEndDate|StartDate|DateOfBirth|SourceSystemId|SourceSystemOwner|PersonNumber',
                     'METADATA|PersonName|EffectiveStartDate|EffectiveEndDate|LegislationCode|PersonId(SourceSystemId)|NameType|FirstName|MiddleNames|LastName|SourceSystemId|SourceSystemOwner',
                     'METADATA|PersonEmail|PersonId(SourceSystemId)|DateFrom|DateTo|EmailType|EmailAddress|PrimaryFlag|SourceSystemId|SourceSystemOwner',
                     'METADATA|WorkRelationship|DateStart|LegalEmployerName|WorkerType|PersonId(SourceSystemId)|PrimaryFlag|SourceSystemId|SourceSystemOwner',
@@ -104,12 +119,12 @@
                 ];
 
                 const merge = [
-                    `MERGE|Worker|HIRE|${v.datumBegin}|4712/12/31|${v.datumBegin}|IAM-${v.iamNum}|HRC_SQLLOADER|IAM-${v.iamNum}`,
-                    `MERGE|PersonName|${v.datumBegin}|4712/12/31|NL|IAM-${v.iamNum}|GLOBAL|${v.voornaam}|${v.tussennaam}|${v.achternaam}|PNIAM-${v.iamNum}|HRC_SQLLOADER`,
-                    `MERGE|PersonEmail|IAM-${v.iamNum}|${v.datumBegin}|4712/12/31|W1|${v.email}|Y|PEIAM-${v.iamNum}|HRC_SQLLOADER`,
-                    `MERGE|WorkRelationship|${v.datumBegin}|Schiphol Nederland BV|E|IAM-${v.iamNum}|Y|WRIAM-${v.iamNum}|HRC_SQLLOADER`,
-                    `MERGE|WorkTerms|HIRE|ET|Schiphol Nederland BV|Schiphol Nederland BV|4712/12/31|Y|1|${v.datumBegin}|SG_E|WRIAM-${v.iamNum}|IAM-${v.iamNum}|Y|WTIAM-${v.iamNum}|HRC_SQLLOADER|SG_SCHIPHOL`,
-                    `MERGE|Assignment|HIRE|NEWHIRE|ACTIVE_PROCESS|E|4712/12/31|Y|1|${v.datumBegin}|SG_E|Schiphol Nederland BV|${v.department}|WRIAM-${v.iamNum}|IAM-${v.iamNum}|Y|Employee|WTIAM-${v.iamNum}|ASGIAM-${v.iamNum}|HRC_SQLLOADER|EIAM-${v.iamNum}|SG_SCHIPHOL|100.4059100.${v.kostenplaats}.100000.L00000.000.00000000`,
+                    `MERGE|Worker|HIRE|${startDate}|4712/12/31|${startDate}|${birthDate}|IAM-${v.iamNum}|HRC_SQLLOADER|IAM-${v.iamNum}`,
+                    `MERGE|PersonName|${startDate}|4712/12/31|NL|IAM-${v.iamNum}|GLOBAL|${v.voornaam}|${v.tussennaam}|${v.achternaam}|PNIAM-${v.iamNum}|HRC_SQLLOADER`,
+                    `MERGE|PersonEmail|IAM-${v.iamNum}|${startDate}|4712/12/31|W1|${v.email}|Y|PEIAM-${v.iamNum}|HRC_SQLLOADER`,
+                    `MERGE|WorkRelationship|${startDate}|Schiphol Nederland BV|E|IAM-${v.iamNum}|Y|WRIAM-${v.iamNum}|HRC_SQLLOADER`,
+                    `MERGE|WorkTerms|HIRE|ET|Schiphol Nederland BV|Schiphol Nederland BV|4712/12/31|Y|1|${startDate}|SG_E|WRIAM-${v.iamNum}|IAM-${v.iamNum}|Y|WTIAM-${v.iamNum}|HRC_SQLLOADER|SG_SCHIPHOL`,
+                    `MERGE|Assignment|HIRE|NEWHIRE|ACTIVE_PROCESS|E|4712/12/31|Y|1|${startDate}|SG_E|Schiphol Nederland BV|${v.department}|WRIAM-${v.iamNum}|IAM-${v.iamNum}|Y|Employee|WTIAM-${v.iamNum}|ASGIAM-${v.iamNum}|HRC_SQLLOADER|EIAM-${v.iamNum}|SG_SCHIPHOL|100.4059100.${v.kostenplaats}.100000.L00000.000.00000000`,
                     `MERGE|PersonUserInformation|IAM-${v.iamNum}|${v.username}|N|Y|Y`,
                     `MERGE|PersonUserManualRoles|IAM-${v.iamNum}|${v.username}|ORA_PER_EMPLOYEE_ABSTRACT`
                 ];
